@@ -3,25 +3,40 @@
 This document outlines the 10-phase development roadmap for the STEM Lesson AI Generator project. The architecture uses a frozen, modular structure where each phase builds upon the outputs of previous phases. The primary intermediary data contracts are strictly maintained as JSON files within each job's workspace.
 
 ```mermaid
-gantt
-    title Development Roadmap & Phase Status
-    dateFormat  YYYY-MM-DD
-    section Completed Phases
-    Phase 1: Project Foundation        :done, des1, 2026-07-01, 2026-07-03
-    Phase 2: Dashboard Foundation      :done, des2, 2026-07-03, 2026-07-05
-    Phase 3: Document Intelligence Engine :done, des3, 2026-07-05, 2026-07-09
-    Phase 4: Language Intelligence Engine :done, des4, 2026-07-09, 2026-07-11
-    section Active & Upcoming Phases
-    Phase 5: Subject Intelligence Engine  :active, des5, 2026-07-11, 2026-07-15
-    Phase 6: Lesson Planning Engine       :      des6, 2026-07-15, 2026-07-20
-    Phase 7: Rendering Engine             :      des7, 2026-07-20, 2026-07-25
-    Phase 8: Presentation Engine          :      des8, 2026-07-25, 2026-07-30
-    Phase 9: History & Settings           :      des9, 2026-07-30, 2026-08-03
-    Phase 10: Optimization & Production   :      des10, 2026-08-03, 2026-08-08
+flowchart LR
+
+P1["Phase 1<br/>Project Foundation"]
+P2["Phase 2<br/>Dashboard Foundation"]
+P3["Phase 3<br/>Document Intelligence Engine"]
+P4["Phase 4<br/>Language Intelligence Engine"]
+P5["Phase 5<br/>Subject Intelligence Engine"]
+P6["Phase 6<br/>Lesson Planning Engine"]
+P7["Phase 7<br/>Rendering Engine"]
+P8["Phase 8<br/>Presentation Engine"]
+P9["Phase 9<br/>History & Settings"]
+P10["Phase 10<br/>Optimization & Production"]
+
+P1 --> P2
+P2 --> P3
+P3 --> P4
+P4 --> P5
+P5 --> P6
+P6 --> P7
+P7 --> P8
+P8 --> P9
+P9 --> P10
+
+style P1 fill:#90EE90
+style P2 fill:#90EE90
+style P3 fill:#90EE90
+style P4 fill:#90EE90
+style P5 fill:#FFF59D
+style P6 fill:#E0E0E0
+style P7 fill:#E0E0E0
+style P8 fill:#E0E0E0
+style P9 fill:#E0E0E0
+style P10 fill:#E0E0E0
 ```
-
----
-
 ## Phase 1: Project Foundation
 *Status: Completed*
 
