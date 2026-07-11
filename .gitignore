@@ -1,0 +1,46 @@
+# Node
+node_modules/
+
+# Python virtual environment
+venv/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Build
+build/
+dist/
+coverage/
+
+# Logs
+*.log
+
+# Environment
+.env*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+
+# Test files
+*.pdf
+
+# OS
+Thumbs.db
