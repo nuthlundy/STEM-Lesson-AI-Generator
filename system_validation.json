@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-07-12T09:22:45.019882Z",
+  "status": "Warning",
+  "checks": [
+    {
+      "name": "workspace_check",
+      "status": "Healthy",
+      "message": "Workspace root exists: True"
+    },
+    {
+      "name": "configuration_check",
+      "status": "Warning",
+      "message": "Total providers registered: 0"
+    },
+    {
+      "name": "plugin_check",
+      "status": "Healthy",
+      "message": "Plugins registry verified."
+    },
+    {
+      "name": "artifact_check",
+      "status": "Healthy",
+      "message": "Total artifacts registered: 7"
+    }
+  ]
+}

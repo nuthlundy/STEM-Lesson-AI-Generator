@@ -1,0 +1,3 @@
+DEFAULT_LAYOUT_TYPE = "slides"
+SUPPORTED_FORMATS = ["html", "pdf", "pptx"]
+RENDER_METADATA_VERSION = "1.0"

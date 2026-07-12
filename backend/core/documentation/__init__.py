@@ -1,0 +1,1 @@
+from core.documentation.generator import PlatformDocGenerator

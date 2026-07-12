@@ -85,23 +85,43 @@ class WorkflowScheduler:
                 payload={"stage_id": stage.stage_id}
             ))
             
+            from core.logging.context import get_logging_context
+            from core.monitoring.tracker import get_metrics_tracker
+            from core.monitoring.profiler import Profiler
+            
+            profiler = Profiler()
             retries = 0
             success = False
-            start_time = time.time()
             
-            while retries <= self.max_retries:
-                try:
-                    if inspect.iscoroutinefunction(execute_fn):
-                        await execute_fn(stage)
-                    else:
-                        execute_fn(stage)
-                    success = True
-                    break
-                except Exception as e:
-                    retries += 1
-                    stage.errors.append(f"Retry {retries} failed: {e}")
-                    
-            stage.execution_time = round(time.time() - start_time, 3)
+            with profiler:
+                while retries <= self.max_retries:
+                    try:
+                        if inspect.iscoroutinefunction(execute_fn):
+                            await execute_fn(stage)
+                        else:
+                            execute_fn(stage)
+                        success = True
+                        break
+                    except Exception as e:
+                        retries += 1
+                        stage.errors.append(f"Retry {retries} failed: {e}")
+                        
+            stage.execution_time = profiler.duration
+            
+            try:
+                ctx = get_logging_context()
+                p_name = ctx.get("pipeline_id")
+                if p_name:
+                    get_metrics_tracker().record_stage_execution(
+                        pipeline_name=p_name,
+                        stage_id=stage.stage_id,
+                        duration=profiler.duration,
+                        memory_usage=profiler.peak_memory,
+                        success=success,
+                        retries=retries
+                    )
+            except Exception:
+                pass
             
             if success:
                 stage.status = StageStatus.COMPLETED

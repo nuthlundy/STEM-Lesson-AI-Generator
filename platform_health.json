@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-07-12T09:22:45.020531Z",
+  "health": {
+    "status": "Healthy",
+    "memory": {
+      "usage_bytes": 52428800,
+      "status": "Healthy"
+    },
+    "subsystems": {
+      "config": "Healthy",
+      "plugins": "Healthy",
+      "workflow": "Healthy",
+      "artifacts": "Healthy",
+      "logging": "Healthy",
+      "monitoring": "Healthy"
+    }
+  }
+}

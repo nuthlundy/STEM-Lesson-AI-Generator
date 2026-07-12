@@ -29,6 +29,15 @@ class WorkflowOrchestrator:
         execute_fn: Callable[[WorkflowStage], Any]
     ) -> WorkflowExecution:
         """Starts a new pipeline run."""
+        from core.bootstrap.bootstrap import PlatformBootstrap
+        from core.health.report import PlatformHealthReporter
+        from core.documentation.generator import PlatformDocGenerator
+        
+        workspace_root = self.registry._resolver.workspace_root
+        PlatformBootstrap.bootstrap(workspace_root=workspace_root)
+        PlatformHealthReporter.generate_report(workspace_root=workspace_root)
+        PlatformDocGenerator.generate_summary(workspace_root=workspace_root)
+
         self.validate(pipeline)
         
         execution = WorkflowExecution(
@@ -100,7 +109,27 @@ class WorkflowOrchestrator:
     ) -> WorkflowExecution:
         from core.events.event import Event
         from core.events.dispatcher import get_event_dispatcher
+        from core.logging.context import set_logging_context
+        from core.monitoring.tracker import get_metrics_tracker
+        from core.monitoring.statistics import MetricsStatistics
+        
         dispatcher = get_event_dispatcher()
+        set_logging_context(pipeline_id=execution.pipeline_name)
+        
+        tracker = get_metrics_tracker()
+        try:
+            tracker.start_pipeline(execution.pipeline_name)
+        except Exception:
+            pass
+        
+        dispatcher.publish(Event(
+            event_id=str(uuid.uuid4()),
+            event_name="PipelineStarted",
+            source_engine="WorkflowOrchestrator",
+            workflow_id=execution.workflow_id,
+            timestamp=datetime.datetime.now().isoformat(),
+            payload={"pipeline_name": execution.pipeline_name}
+        ))
         
         dispatcher.publish(Event(
             event_id=str(uuid.uuid4()),
@@ -130,6 +159,26 @@ class WorkflowOrchestrator:
         execution.artifacts = generated
         
         self._save_execution_json(execution)
+        
+        try:
+            metrics = tracker.get_pipeline_metrics(execution.pipeline_name)
+            MetricsStatistics.calculate_statistics(metrics)
+            target_dir = self.registry._resolver.workspace_root
+            metrics_path = os.path.join(target_dir, "workflow_metrics.json")
+            with open(metrics_path, "w", encoding="utf-8") as f:
+                json.dump(metrics.model_dump(), f, indent=2)
+        except Exception:
+            pass
+            
+        final_event_name = "PipelineFinished" if final_status == WorkflowStatus.COMPLETED else "PipelineFailed"
+        dispatcher.publish(Event(
+            event_id=str(uuid.uuid4()),
+            event_name=final_event_name,
+            source_engine="WorkflowOrchestrator",
+            workflow_id=execution.workflow_id,
+            timestamp=datetime.datetime.now().isoformat(),
+            payload={"pipeline_name": execution.pipeline_name, "status": final_status}
+        ))
         
         dispatcher.publish(Event(
             event_id=str(uuid.uuid4()),

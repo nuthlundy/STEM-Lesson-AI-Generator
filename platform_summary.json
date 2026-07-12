@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-07-12T09:22:45.021083Z",
+  "metadata": {
+    "version": "1.0.0",
+    "environment": "production"
+  },
+  "registered_artifacts": [
+    "lesson.json",
+    "lesson_language.json",
+    "lesson_subject.json",
+    "lesson_subject_graph.json",
+    "lesson_learning_objectives.json",
+    "lesson_instructional_model.json",
+    "lesson_plan.json"
+  ],
+  "registered_providers": [],
+  "registered_plugins": [],
+  "supported_engines": [
+    "Document Intelligence Engine",
+    "Subject Intelligence Engine",
+    "Lesson Planning Engine"
+  ]
+}

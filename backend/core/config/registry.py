@@ -45,3 +45,8 @@ class ConfigRegistry:
         """Validates provider credentials and metadata."""
         provider = self.get_provider(provider_name)
         ConfigValidator.validate_provider(provider)
+
+_canonical_config_registry = ConfigRegistry()
+
+def get_canonical_config_registry() -> ConfigRegistry:
+    return _canonical_config_registry
