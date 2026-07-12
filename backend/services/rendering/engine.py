@@ -33,3 +33,29 @@ class RenderingEngine:
             lesson_plan_data = json.load(f)
             
         return self.render(lesson_plan_data, renderer_type)
+
+    def execute_themed_pipeline(self, theme_name: str = "default") -> Dict[str, Any]:
+        from services.rendering.slide_builder import SlideBuilder
+        from services.rendering.templates import select_template
+        from services.rendering.optimization.validator import VisualDesignValidator
+        
+        lesson_render_path = os.path.join(self.workspace_root, "lesson_render.json")
+        if not os.path.exists(lesson_render_path):
+            self.execute("deterministic")
+            
+        builder = SlideBuilder(self.workspace_root)
+        presentation = builder.build_presentation(lesson_render_path, theme_name)
+        
+        slides = presentation.get("slides", [])
+        total = len(slides)
+        for idx, slide in enumerate(slides):
+            tpl = select_template(slide, idx, total)
+            slide["template_name"] = tpl
+            
+        VisualDesignValidator.validate_visuals(presentation, self.workspace_root)
+        
+        themed_path = os.path.join(self.workspace_root, "lesson_themed.json")
+        with open(themed_path, "w", encoding="utf-8") as f:
+            json.dump(presentation, f, indent=2)
+            
+        return presentation
