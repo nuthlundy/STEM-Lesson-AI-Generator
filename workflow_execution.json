@@ -1,0 +1,28 @@
+{
+  "workflow_id": "a66bff16-d205-4cf9-93fc-e10cc4e6b161",
+  "pipeline_name": "Standard Pipeline",
+  "stages": [
+    {
+      "stage_id": "stage1",
+      "stage_name": "Stage 1",
+      "engine_name": "Document Intelligence Engine",
+      "status": "COMPLETED",
+      "inputs": [
+        "lesson.json"
+      ],
+      "outputs": [
+        "lesson.json"
+      ],
+      "dependencies": [],
+      "execution_time": 0.0,
+      "errors": []
+    }
+  ],
+  "artifacts": [
+    "lesson.json"
+  ],
+  "started_at": "2026-07-12T15:48:20.280821",
+  "finished_at": "2026-07-12T15:48:20.281449",
+  "execution_time": 0.0,
+  "status": "COMPLETED"
+}
