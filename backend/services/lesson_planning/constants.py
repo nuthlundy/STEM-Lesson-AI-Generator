@@ -1,0 +1,3 @@
+ENGINE_NAME = "Lesson Planning Engine"
+ENGINE_VERSION = "1.0.0"
+SCHEMA_VERSION = "1.0.0"

@@ -1,0 +1,1 @@
+from services.subject_intelligence.interfaces.processor import SubjectProcessor
