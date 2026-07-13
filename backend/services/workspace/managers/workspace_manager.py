@@ -7,6 +7,7 @@ from services.workspace.schemas import WorkspaceMetadata
 from services.workspace.managers.directory_manager import DirectoryManager
 from services.workspace.registry.project_registry import ProjectRegistry
 from services.workspace.snapshots.snapshot_manager import SnapshotManager
+from services.workspace.settings.settings_manager import SettingsManager
 
 class WorkspaceManager:
     def __init__(self, root_path: str = ".") -> None:
@@ -14,6 +15,7 @@ class WorkspaceManager:
         self.active_workspaces: Dict[str, WorkspaceMetadata] = {}
         self.registry = ProjectRegistry(storage_path=root_path)
         self.snapshot_manager = SnapshotManager(storage_path=root_path)
+        self.settings_manager = SettingsManager(storage_path=root_path)
 
     def create_workspace(self, root_path: str, directories: List[str]) -> WorkspaceMetadata:
         workspace_id = str(uuid.uuid4())
