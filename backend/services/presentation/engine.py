@@ -6,15 +6,18 @@ from services.presentation.config import PresentationConfig
 from services.presentation.schemas import PresentationSessionModel, PresentationSlideSession
 from services.presentation.types import PresentationNotFoundError
 from services.presentation.writers.json_writer import JsonPresentationWriter
+from services.presentation.navigation.controller import NavigationController
 
 class PresentationEngine:
     def __init__(self, workspace_root: str = "."):
         self.workspace_root = workspace_root
         self._active_session: Optional[PresentationSessionModel] = None
         self._initialized = False
+        self.navigation_controller: Optional[NavigationController] = None
 
     def initialize(self) -> None:
         self._initialized = True
+        self.navigation_controller = NavigationController()
 
     def before_present(self, presentation_path: str) -> None:
         if not os.path.exists(presentation_path):
@@ -67,3 +70,4 @@ class PresentationEngine:
     def shutdown(self) -> None:
         self._active_session = None
         self._initialized = False
+        self.navigation_controller = None
