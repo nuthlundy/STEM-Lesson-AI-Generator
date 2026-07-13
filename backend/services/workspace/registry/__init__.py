@@ -1,0 +1,4 @@
+from services.workspace.registry.project_metadata import ProjectMetadata
+from services.workspace.registry.project_validator import ProjectValidator
+from services.workspace.registry.project_index import ProjectIndex
+from services.workspace.registry.project_registry import ProjectRegistry
