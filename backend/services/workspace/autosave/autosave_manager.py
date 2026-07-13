@@ -7,6 +7,7 @@ from typing import List, Dict, Any, Optional
 from services.workspace.autosave.checkpoint import AutosaveCheckpoint
 from services.workspace.autosave.validator import AutosaveValidator
 from services.workspace.autosave.scheduler import AutosaveScheduler
+from services.workspace.recovery.recovery_manager import RecoveryManager
 
 class AutosaveManager:
     def __init__(self, storage_path: str = ".", interval: float = 60.0, trigger_callback = None) -> None:
@@ -31,7 +32,8 @@ class AutosaveManager:
                 if self.enabled:
                     self.scheduler.start()
             except Exception:
-                pass
+                recovery_mgr = RecoveryManager(storage_path=self.storage_path)
+                recovery_mgr.recover_autosave({})
 
     def save_config(self) -> None:
         data = {
@@ -81,4 +83,9 @@ class AutosaveManager:
         if not self.checkpoints:
             return False
         latest = self.checkpoints[-1]
-        return AutosaveValidator.validate_checkpoint(latest)
+        valid = AutosaveValidator.validate_checkpoint(latest)
+        if not valid:
+            recovery_mgr = RecoveryManager(storage_path=self.storage_path)
+            recovery_mgr.recover_autosave(latest.model_dump())
+            return False
+        return True

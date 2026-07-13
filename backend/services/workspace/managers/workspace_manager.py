@@ -13,6 +13,7 @@ from services.workspace.search.search_engine import SearchEngine
 from services.workspace.templates.template_manager import TemplateManager
 from services.workspace.export.export_manager import ExportManager
 from services.workspace.autosave.autosave_manager import AutosaveManager
+from services.workspace.recovery.recovery_manager import RecoveryManager
 
 class WorkspaceManager:
     def __init__(self, root_path: str = ".") -> None:
@@ -25,6 +26,7 @@ class WorkspaceManager:
         self.template_manager = TemplateManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
         self.export_manager = ExportManager(storage_path=root_path)
         self.autosave_manager = AutosaveManager(storage_path=root_path, trigger_callback=self.refresh_search_index)
+        self.recovery_manager = RecoveryManager(storage_path=root_path)
         
         import_mod = importlib.import_module("services.workspace.import.import_manager")
         self.import_manager = import_mod.ImportManager(storage_path=root_path)
@@ -137,6 +139,17 @@ class WorkspaceManager:
     def generate_presentation(self, *args, **kwargs) -> Any:
         self.autosave_manager.trigger_autosave()
         return None
+
+    def recover_workspace(self) -> Dict[str, Any]:
+        for ws in self.active_workspaces.values():
+            return self.recovery_manager.recover_workspace(ws.model_dump())
+        return self.recovery_manager.recover_workspace({"workspace_id": "default", "root_path": self.root_path})
+
+    def recover_project(self, project_id: str) -> Dict[str, Any]:
+        meta = self.registry.lookup_project(project_id)
+        if meta:
+            return self.recovery_manager.recover_project(meta.model_dump())
+        return self.recovery_manager.recover_project({"project_id": project_id})
 
     def handle_project_change(self) -> None:
         self.refresh_search_index()
