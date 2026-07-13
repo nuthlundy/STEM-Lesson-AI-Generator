@@ -7,9 +7,12 @@ from services.workspace.profiles.profile_validator import ProfileValidator
 
 class ProfileManager:
     def __init__(self, storage_path: str = ".") -> None:
+        self.storage_path = storage_path
         self.store = ProfileStore(storage_path=storage_path)
         self.profiles: List[UserProfile] = self.store.load_profiles()
         self.active_profile_id: Optional[str] = None
+        from services.workspace.preferences.preference_manager import PreferenceManager
+        self.preference_manager = PreferenceManager(storage_path=storage_path)
 
     def create_profile(self, name: str, ai_provider: str = "gemini", renderer: str = "html", export_defaults: Dict[str, Any] = None, language: str = "en", theme: str = "light") -> Optional[UserProfile]:
         profile_id = str(uuid.uuid4())
@@ -55,6 +58,12 @@ class ProfileManager:
         for p in self.profiles:
             if p.profile_id == profile_id:
                 self.active_profile_id = profile_id
+                self.preference_manager.apply_preferences({
+                    "preferred_language": p.language,
+                    "ui_theme": p.theme,
+                    "ai_model_preference": p.preferred_ai_provider,
+                    "default_export_format": p.preferred_renderer
+                })
                 return True
         return False
 
