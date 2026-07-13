@@ -5,11 +5,16 @@ from typing import Dict, Any, Optional
 from services.presentation.config import PresentationConfig
 from services.presentation.schemas import PresentationSessionModel, PresentationSlideSession
 from services.presentation.types import PresentationNotFoundError
-from services.presentation.factory import PresentationPresenterFactory
+from services.presentation.writers.json_writer import JsonPresentationWriter
 
 class PresentationEngine:
     def __init__(self, workspace_root: str = "."):
         self.workspace_root = workspace_root
+        self._active_session: Optional[PresentationSessionModel] = None
+        self._initialized = False
+
+    def initialize(self) -> None:
+        self._initialized = True
 
     def before_present(self, presentation_path: str) -> None:
         if not os.path.exists(presentation_path):
@@ -38,9 +43,10 @@ class PresentationEngine:
         )
         
         temp_session_path = os.path.join(self.workspace_root, "presentation_session.json")
-        with open(temp_session_path, "w", encoding="utf-8") as f:
-            json.dump(session.model_dump(), f, indent=2)
+        writer = JsonPresentationWriter()
+        writer.write(session, temp_session_path)
 
+        from services.presentation.factory import PresentationPresenterFactory
         presenter = PresentationPresenterFactory.get_presenter(presenter_type)
         session = presenter.present(temp_session_path)
         
@@ -49,5 +55,15 @@ class PresentationEngine:
 
     def after_present(self, session: PresentationSessionModel) -> None:
         output_path = os.path.join(self.workspace_root, "presentation_session.json")
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(session.model_dump(), f, indent=2)
+        writer = JsonPresentationWriter()
+        writer.write(session, output_path)
+
+    def process(self, presentation_path: str, config: Optional[PresentationConfig] = None, presenter_type: str = "deterministic") -> PresentationSessionModel:
+        if not self._initialized:
+            self.initialize()
+        self._active_session = self.present(presentation_path, config, presenter_type)
+        return self._active_session
+
+    def shutdown(self) -> None:
+        self._active_session = None
+        self._initialized = False

@@ -13,3 +13,8 @@ class PresentationPresenterFactory:
         if presenter_type == "gemini":
             return GeminiPresenter()
         return DeterministicPresenter()
+
+    @staticmethod
+    def create_engine(workspace_root: str = ".") -> "PresentationEngine":
+        from services.presentation.engine import PresentationEngine
+        return PresentationEngine(workspace_root=workspace_root)
