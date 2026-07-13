@@ -7,10 +7,15 @@ from services.presentation.export.factory import PresentationExportFactory
 from services.presentation.export.base_exporter import BasePresentationExporter
 from services.presentation.engine import PresentationEngine
 
+class DummyExporter(BasePresentationExporter):
+    def export(self, session_path: str, output_path: str) -> None:
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write("dummy")
+
 class TestPresentationExportManager(unittest.TestCase):
     def setUp(self):
         self.factory = PresentationExportFactory()
-        self.factory.register("pdf", BasePresentationExporter)
+        self.factory.register("pdf", DummyExporter)
         self.manager = PresentationExportManager(factory=self.factory)
 
     def test_execute_export_success(self):
@@ -46,6 +51,9 @@ class TestPresentationExportManager(unittest.TestCase):
 
     def test_execute_export_invalid_on_validation_failure(self):
         class InvalidExporter(BasePresentationExporter):
+            def export(self, s, o):
+                with open(o, "w", encoding="utf-8") as f:
+                    f.write("dummy")
             def validate(self, o):
                 return False
         self.factory.register("invalid", InvalidExporter)
@@ -55,7 +63,7 @@ class TestPresentationExportManager(unittest.TestCase):
 
     def test_exports_history_tracking(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
-            self.manager.execute_export("pdf", "s", "o.pdf", workspace_root=tmp_dir)
+            self.manager.execute_export("pdf", "s", os.path.join(tmp_dir, "o.pdf"), workspace_root=tmp_dir)
             self.assertEqual(len(self.manager.exports_history), 1)
 
     def test_engine_export_manager_registration(self):
@@ -69,7 +77,7 @@ class TestPresentationExportManager(unittest.TestCase):
 
     def test_metadata_report_format(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
-            self.manager.execute_export("pdf", "s", "o.pdf", workspace_root=tmp_dir)
+            self.manager.execute_export("pdf", "s", os.path.join(tmp_dir, "o.pdf"), workspace_root=tmp_dir)
             report_path = os.path.join(tmp_dir, "presentation_exports.json")
             with open(report_path, "r", encoding="utf-8") as f:
                 data = json.load(f)

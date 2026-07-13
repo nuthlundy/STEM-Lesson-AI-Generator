@@ -13,5 +13,6 @@ class BasePresentationExporter(ExporterInterface):
         return {
             "output_filename": output_path,
             "generation_timestamp": time.time(),
-            "export_duration": 0.1
+            "export_duration": 0.1,
+            "export_type": "base"
         }

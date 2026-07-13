@@ -40,6 +40,23 @@ class PresentationEngine:
         self.utility_manager = UtilityManager()
         self.analytics_manager = AnalyticsManager()
         self.export_factory = PresentationExportFactory()
+        
+        from services.presentation.export.pdf import PdfPresentationExporter
+        from services.presentation.export.html import HtmlPresentationExporter
+        from services.presentation.export.web import WebPresentationExporter
+        from services.presentation.export.mobile import MobilePresentationExporter
+        from services.presentation.export.offline import OfflinePresentationExporter
+        from services.presentation.export.print import PrintPresentationExporter
+        from services.presentation.export.thumbnails import ThumbnailPresentationExporter
+        
+        self.export_factory.register("pdf", PdfPresentationExporter)
+        self.export_factory.register("html", HtmlPresentationExporter)
+        self.export_factory.register("web", WebPresentationExporter)
+        self.export_factory.register("mobile", MobilePresentationExporter)
+        self.export_factory.register("offline", OfflinePresentationExporter)
+        self.export_factory.register("print", PrintPresentationExporter)
+        self.export_factory.register("thumbnails", ThumbnailPresentationExporter)
+        
         self.export_manager = PresentationExportManager(factory=self.export_factory)
 
     def before_present(self, presentation_path: str) -> None:

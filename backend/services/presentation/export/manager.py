@@ -10,21 +10,31 @@ class PresentationExportManager:
         self.exports_history: List[Dict[str, Any]] = []
 
     def execute_export(self, export_type: str, session_path: str, output_path: str, workspace_root: str = ".") -> Dict[str, Any]:
+        if export_type not in self.factory.list_supported_types():
+            raise ValueError(f"Unsupported export type: {export_type}")
+            
         exporter = self.factory.get_exporter(export_type)
         start_time = time.time()
         
         status = "success"
         try:
             exporter.export(session_path, output_path)
-            valid = exporter.validate(output_path)
-            if not valid:
-                status = "invalid"
+            
+            if not os.path.exists(output_path):
+                status = "missing_output"
+            else:
+                valid = exporter.validate(output_path)
+                if not valid:
+                    status = "invalid"
         except Exception:
             status = "failed"
             
         duration = time.time() - start_time
         meta = exporter.metadata(output_path)
         
+        if not all(k in meta for k in ["output_filename", "generation_timestamp", "export_duration", "export_type"]):
+            status = "incomplete_metadata"
+            
         entry = {
             "export_type": export_type,
             "export_status": status,
