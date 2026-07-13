@@ -8,13 +8,15 @@ from services.workspace.managers.directory_manager import DirectoryManager
 from services.workspace.registry.project_registry import ProjectRegistry
 from services.workspace.snapshots.snapshot_manager import SnapshotManager
 from services.workspace.settings.settings_manager import SettingsManager
+from services.workspace.search.search_engine import SearchEngine
 
 class WorkspaceManager:
     def __init__(self, root_path: str = ".") -> None:
         self.root_path = root_path
         self.active_workspaces: Dict[str, WorkspaceMetadata] = {}
-        self.registry = ProjectRegistry(storage_path=root_path)
-        self.snapshot_manager = SnapshotManager(storage_path=root_path)
+        self.search_engine = SearchEngine(storage_path=root_path)
+        self.registry = ProjectRegistry(storage_path=root_path, on_change_callback=self.refresh_search_index)
+        self.snapshot_manager = SnapshotManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
         self.settings_manager = SettingsManager(storage_path=root_path)
 
     def create_workspace(self, root_path: str, directories: List[str]) -> WorkspaceMetadata:
@@ -34,6 +36,7 @@ class WorkspaceManager:
             json.dump(meta.model_dump(), f, indent=2)
             
         self.active_workspaces[workspace_id] = meta
+        self.refresh_search_index()
         return meta
 
     def open_workspace(self, root_path: str) -> WorkspaceMetadata:
@@ -72,6 +75,7 @@ class WorkspaceManager:
     def create_snapshot(self, project_id: str, description: str) -> Any:
         snap = self.snapshot_manager.create_snapshot(project_id, self.root_path, description)
         self.registry.history_manager.log_snapshot_creation(project_id, snap.snapshot_id)
+        # Callback will trigger refresh_search_index automatically
         return snap
 
     def restore_snapshot(self, snapshot_id: str) -> bool:
@@ -84,3 +88,22 @@ class WorkspaceManager:
         if res:
             self.registry.history_manager.log_snapshot_restore(project_id, snapshot_id)
         return res
+
+    def refresh_search_index(self) -> None:
+        self.search_engine.indexer.clear()
+        for p in self.registry.projects:
+            self.search_engine.indexer.index_item(
+                item_id=p.project_id,
+                name=p.project_name,
+                description=f"Workspace path: {p.workspace_path}",
+                category="project",
+                extra={"timestamp": p.creation_date}
+            )
+        for s in self.snapshot_manager.snapshots:
+            self.search_engine.indexer.index_item(
+                item_id=s.snapshot_id,
+                name=s.description,
+                description=f"Snapshot for project: {s.project_id}",
+                category="snapshot",
+                extra={"timestamp": s.creation_timestamp}
+            )

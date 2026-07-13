@@ -8,9 +8,10 @@ from services.workspace.snapshots.snapshot_store import SnapshotStore
 from services.workspace.snapshots.snapshot_validator import SnapshotValidator
 
 class SnapshotManager:
-    def __init__(self, storage_path: str = ".") -> None:
+    def __init__(self, storage_path: str = ".", on_change_callback = None) -> None:
         self.store = SnapshotStore(storage_path=storage_path)
         self.snapshots: List[Snapshot] = self.store.load_snapshots()
+        self.on_change_callback = on_change_callback
 
     def _calculate_checksum(self, root_path: str) -> str:
         hasher = hashlib.md5()
@@ -28,6 +29,8 @@ class SnapshotManager:
         )
         self.snapshots.append(snap)
         self.store.save_snapshots(self.snapshots)
+        if self.on_change_callback:
+            self.on_change_callback()
         return snap
 
     def restore_snapshot(self, snapshot_id: str, root_path: str) -> bool:
@@ -43,6 +46,8 @@ class SnapshotManager:
             if snap.snapshot_id == snapshot_id:
                 self.snapshots.pop(i)
                 self.store.save_snapshots(self.snapshots)
+                if self.on_change_callback:
+                    self.on_change_callback()
                 return True
         return False
 

@@ -8,12 +8,13 @@ from services.workspace.registry.project_index import ProjectIndex
 from services.workspace.history.history_manager import HistoryManager
 
 class ProjectRegistry:
-    def __init__(self, storage_path: str = ".") -> None:
+    def __init__(self, storage_path: str = ".", on_change_callback = None) -> None:
         self.storage_path = storage_path
         self.projects_file = os.path.join(storage_path, "projects.json")
         self.projects: List[ProjectMetadata] = []
         self.index = ProjectIndex()
         self.history_manager = HistoryManager(storage_path=storage_path)
+        self.on_change_callback = on_change_callback
         self.load_registry()
 
     def load_registry(self) -> None:
@@ -45,6 +46,8 @@ class ProjectRegistry:
             project_id=meta.project_id,
             artifact="workspace.json"
         )
+        if self.on_change_callback:
+            self.on_change_callback()
         return True
 
     def unregister_project(self, project_id: str) -> bool:
@@ -59,6 +62,8 @@ class ProjectRegistry:
                     engine="workspace_manager",
                     project_id=project_id
                 )
+                if self.on_change_callback:
+                    self.on_change_callback()
                 return True
         return False
 
@@ -77,6 +82,8 @@ class ProjectRegistry:
                     engine="workspace_manager",
                     project_id=project_id
                 )
+                if self.on_change_callback:
+                    self.on_change_callback()
                 return True
         return False
 
