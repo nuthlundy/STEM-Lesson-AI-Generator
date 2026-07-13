@@ -5,6 +5,7 @@ from typing import Dict, Any, Optional
 from services.presentation.config import PresentationConfig
 from services.presentation.schemas import PresentationSessionModel, PresentationSlideSession
 from services.presentation.types import PresentationNotFoundError
+from services.presentation.factory import PresentationPresenterFactory
 
 class PresentationEngine:
     def __init__(self, workspace_root: str = "."):
@@ -14,7 +15,7 @@ class PresentationEngine:
         if not os.path.exists(presentation_path):
             raise PresentationNotFoundError(f"PowerPoint file not found: {presentation_path}")
 
-    def present(self, presentation_path: str, config: Optional[PresentationConfig] = None) -> PresentationSessionModel:
+    def present(self, presentation_path: str, config: Optional[PresentationConfig] = None, presenter_type: str = "deterministic") -> PresentationSessionModel:
         self.before_present(presentation_path)
         
         if not config:
@@ -35,6 +36,13 @@ class PresentationEngine:
                 "enable_presenter_view": config.enable_presenter_view
             }
         )
+        
+        temp_session_path = os.path.join(self.workspace_root, "presentation_session.json")
+        with open(temp_session_path, "w", encoding="utf-8") as f:
+            json.dump(session.model_dump(), f, indent=2)
+
+        presenter = PresentationPresenterFactory.get_presenter(presenter_type)
+        session = presenter.present(temp_session_path)
         
         self.after_present(session)
         return session

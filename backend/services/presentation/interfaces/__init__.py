@@ -1,0 +1,3 @@
+from services.presentation.interfaces.presenter import PresenterInterface
+from services.presentation.interfaces.navigator import NavigatorInterface
+from services.presentation.interfaces.controller import ControllerInterface
