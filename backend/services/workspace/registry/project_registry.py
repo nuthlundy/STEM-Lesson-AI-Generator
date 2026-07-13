@@ -89,3 +89,15 @@ class ProjectRegistry:
 
     def lookup_project(self, project_id: str) -> Optional[ProjectMetadata]:
         return self.index.lookup(project_id)
+
+    def get_export_metadata(self, project_id: str) -> Optional[Dict[str, Any]]:
+        p = self.lookup_project(project_id)
+        if p:
+            return {
+                "project_id": p.project_id,
+                "project_name": p.project_name,
+                "version": p.version,
+                "engine_compatibility": p.engine_compatibility,
+                "workspace_path": p.workspace_path
+            }
+        return None

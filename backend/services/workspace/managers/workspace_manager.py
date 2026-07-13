@@ -11,6 +11,7 @@ from services.workspace.snapshots.snapshot_manager import SnapshotManager
 from services.workspace.settings.settings_manager import SettingsManager
 from services.workspace.search.search_engine import SearchEngine
 from services.workspace.templates.template_manager import TemplateManager
+from services.workspace.export.export_manager import ExportManager
 
 class WorkspaceManager:
     def __init__(self, root_path: str = ".") -> None:
@@ -21,6 +22,7 @@ class WorkspaceManager:
         self.snapshot_manager = SnapshotManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
         self.settings_manager = SettingsManager(storage_path=root_path)
         self.template_manager = TemplateManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
+        self.export_manager = ExportManager(storage_path=root_path)
         
         import_mod = importlib.import_module("services.workspace.import.import_manager")
         self.import_manager = import_mod.ImportManager(storage_path=root_path)
@@ -109,6 +111,18 @@ class WorkspaceManager:
         res = self.import_manager.import_workspace(file_path)
         self.refresh_search_index()
         return res
+
+    def export_project(self, project_id: str, dest_path: str) -> Dict[str, Any]:
+        meta = self.registry.get_export_metadata(project_id)
+        if not meta:
+            raise ValueError(f"Project {project_id} not registered")
+        return self.export_manager.export_project(meta, dest_path)
+
+    def export_workspace(self, workspace_id: str, dest_path: str) -> Dict[str, Any]:
+        meta = self.active_workspaces.get(workspace_id)
+        if not meta:
+            raise ValueError(f"Workspace {workspace_id} not active")
+        return self.export_manager.export_workspace(meta.model_dump(), dest_path)
 
     def refresh_search_index(self) -> None:
         self.search_engine.indexer.clear()
