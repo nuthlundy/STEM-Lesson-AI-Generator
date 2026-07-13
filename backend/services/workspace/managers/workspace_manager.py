@@ -2,6 +2,7 @@ import os
 import json
 import time
 import uuid
+import importlib
 from typing import Dict, Any, List
 from services.workspace.schemas import WorkspaceMetadata
 from services.workspace.managers.directory_manager import DirectoryManager
@@ -20,6 +21,9 @@ class WorkspaceManager:
         self.snapshot_manager = SnapshotManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
         self.settings_manager = SettingsManager(storage_path=root_path)
         self.template_manager = TemplateManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
+        
+        import_mod = importlib.import_module("services.workspace.import.import_manager")
+        self.import_manager = import_mod.ImportManager(storage_path=root_path)
 
     def create_workspace(self, root_path: str, directories: List[str]) -> WorkspaceMetadata:
         workspace_id = str(uuid.uuid4())
@@ -95,6 +99,16 @@ class WorkspaceManager:
 
     def apply_template(self, template_id: str, project_id: str) -> bool:
         return self.template_manager.apply_template(template_id, project_id)
+
+    def import_project(self, file_path: str) -> Dict[str, Any]:
+        res = self.import_manager.import_project(file_path)
+        self.refresh_search_index()
+        return res
+
+    def import_workspace(self, file_path: str) -> Dict[str, Any]:
+        res = self.import_manager.import_workspace(file_path)
+        self.refresh_search_index()
+        return res
 
     def refresh_search_index(self) -> None:
         self.search_engine.indexer.clear()
