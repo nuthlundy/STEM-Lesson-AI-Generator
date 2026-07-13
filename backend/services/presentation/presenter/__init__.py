@@ -1,0 +1,4 @@
+from services.presentation.presenter.notes import PresenterNotesResolver
+from services.presentation.presenter.cue_cards import CueCardResolver
+from services.presentation.presenter.checklist import TeachingChecklistResolver
+from services.presentation.presenter.objectives import LearningObjectivesResolver

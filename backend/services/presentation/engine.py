@@ -7,6 +7,8 @@ from services.presentation.schemas import PresentationSessionModel, Presentation
 from services.presentation.types import PresentationNotFoundError
 from services.presentation.writers.json_writer import JsonPresentationWriter
 from services.presentation.navigation.controller import NavigationController
+from services.presentation.timing.timer import PresentationTimer
+from services.presentation.session import PresentationSessionBuilder
 
 class PresentationEngine:
     def __init__(self, workspace_root: str = "."):
@@ -14,10 +16,13 @@ class PresentationEngine:
         self._active_session: Optional[PresentationSessionModel] = None
         self._initialized = False
         self.navigation_controller: Optional[NavigationController] = None
+        self.timer: Optional[PresentationTimer] = None
 
     def initialize(self) -> None:
         self._initialized = True
         self.navigation_controller = NavigationController()
+        self.timer = PresentationTimer()
+        self.timer.start()
 
     def before_present(self, presentation_path: str) -> None:
         if not os.path.exists(presentation_path):
@@ -60,6 +65,14 @@ class PresentationEngine:
         output_path = os.path.join(self.workspace_root, "presentation_session.json")
         writer = JsonPresentationWriter()
         writer.write(session, output_path)
+        
+        if self._initialized and self.navigation_controller and self.timer:
+            PresentationSessionBuilder.build_delivery_session(
+                workspace_root=self.workspace_root,
+                navigation=self.navigation_controller,
+                timer=self.timer,
+                metadata=session.metadata
+            )
 
     def process(self, presentation_path: str, config: Optional[PresentationConfig] = None, presenter_type: str = "deterministic") -> PresentationSessionModel:
         if not self._initialized:
@@ -68,6 +81,9 @@ class PresentationEngine:
         return self._active_session
 
     def shutdown(self) -> None:
+        if self.timer:
+            self.timer.stop()
         self._active_session = None
         self._initialized = False
         self.navigation_controller = None
+        self.timer = None
