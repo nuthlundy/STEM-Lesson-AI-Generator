@@ -5,6 +5,7 @@ from typing import Dict, List, Any, Optional
 from services.workspace.registry.project_metadata import ProjectMetadata
 from services.workspace.registry.project_validator import ProjectValidator
 from services.workspace.registry.project_index import ProjectIndex
+from services.workspace.history.history_manager import HistoryManager
 
 class ProjectRegistry:
     def __init__(self, storage_path: str = ".") -> None:
@@ -12,6 +13,7 @@ class ProjectRegistry:
         self.projects_file = os.path.join(storage_path, "projects.json")
         self.projects: List[ProjectMetadata] = []
         self.index = ProjectIndex()
+        self.history_manager = HistoryManager(storage_path=storage_path)
         self.load_registry()
 
     def load_registry(self) -> None:
@@ -36,6 +38,13 @@ class ProjectRegistry:
         self.projects.append(meta)
         self.index.index_project(meta)
         self.save_registry()
+        
+        self.history_manager.append_history(
+            action="create",
+            engine="workspace_manager",
+            project_id=meta.project_id,
+            artifact="workspace.json"
+        )
         return True
 
     def unregister_project(self, project_id: str) -> bool:
@@ -44,6 +53,12 @@ class ProjectRegistry:
                 self.projects.pop(i)
                 self.index.remove_project(project_id)
                 self.save_registry()
+                
+                self.history_manager.append_history(
+                    action="remove",
+                    engine="workspace_manager",
+                    project_id=project_id
+                )
                 return True
         return False
 
@@ -56,6 +71,12 @@ class ProjectRegistry:
                 p.last_modified = time.time()
                 self.index.index_project(p)
                 self.save_registry()
+                
+                self.history_manager.append_history(
+                    action="update",
+                    engine="workspace_manager",
+                    project_id=project_id
+                )
                 return True
         return False
 
