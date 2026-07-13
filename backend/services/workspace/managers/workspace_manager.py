@@ -12,17 +12,19 @@ from services.workspace.settings.settings_manager import SettingsManager
 from services.workspace.search.search_engine import SearchEngine
 from services.workspace.templates.template_manager import TemplateManager
 from services.workspace.export.export_manager import ExportManager
+from services.workspace.autosave.autosave_manager import AutosaveManager
 
 class WorkspaceManager:
     def __init__(self, root_path: str = ".") -> None:
         self.root_path = root_path
         self.active_workspaces: Dict[str, WorkspaceMetadata] = {}
         self.search_engine = SearchEngine(storage_path=root_path)
-        self.registry = ProjectRegistry(storage_path=root_path, on_change_callback=self.refresh_search_index)
-        self.snapshot_manager = SnapshotManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
+        self.registry = ProjectRegistry(storage_path=root_path, on_change_callback=self.handle_project_change)
+        self.snapshot_manager = SnapshotManager(storage_path=root_path, on_change_callback=self.handle_project_change)
         self.settings_manager = SettingsManager(storage_path=root_path)
         self.template_manager = TemplateManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
         self.export_manager = ExportManager(storage_path=root_path)
+        self.autosave_manager = AutosaveManager(storage_path=root_path, trigger_callback=self.refresh_search_index)
         
         import_mod = importlib.import_module("services.workspace.import.import_manager")
         self.import_manager = import_mod.ImportManager(storage_path=root_path)
@@ -44,7 +46,7 @@ class WorkspaceManager:
             json.dump(meta.model_dump(), f, indent=2)
             
         self.active_workspaces[workspace_id] = meta
-        self.refresh_search_index()
+        self.handle_project_change()
         return meta
 
     def open_workspace(self, root_path: str) -> WorkspaceMetadata:
@@ -104,25 +106,41 @@ class WorkspaceManager:
 
     def import_project(self, file_path: str) -> Dict[str, Any]:
         res = self.import_manager.import_project(file_path)
-        self.refresh_search_index()
+        self.handle_project_change()
         return res
 
     def import_workspace(self, file_path: str) -> Dict[str, Any]:
         res = self.import_manager.import_workspace(file_path)
-        self.refresh_search_index()
+        self.handle_project_change()
         return res
 
     def export_project(self, project_id: str, dest_path: str) -> Dict[str, Any]:
         meta = self.registry.get_export_metadata(project_id)
         if not meta:
             raise ValueError(f"Project {project_id} not registered")
-        return self.export_manager.export_project(meta, dest_path)
+        res = self.export_manager.export_project(meta, dest_path)
+        self.autosave_manager.trigger_autosave(project_id)
+        return res
 
     def export_workspace(self, workspace_id: str, dest_path: str) -> Dict[str, Any]:
         meta = self.active_workspaces.get(workspace_id)
         if not meta:
             raise ValueError(f"Workspace {workspace_id} not active")
-        return self.export_manager.export_workspace(meta.model_dump(), dest_path)
+        res = self.export_manager.export_workspace(meta.model_dump(), dest_path)
+        self.autosave_manager.trigger_autosave(workspace_id)
+        return res
+
+    def generate_lesson(self, *args, **kwargs) -> Any:
+        self.autosave_manager.trigger_autosave()
+        return None
+
+    def generate_presentation(self, *args, **kwargs) -> Any:
+        self.autosave_manager.trigger_autosave()
+        return None
+
+    def handle_project_change(self) -> None:
+        self.refresh_search_index()
+        self.autosave_manager.trigger_autosave()
 
     def refresh_search_index(self) -> None:
         self.search_engine.indexer.clear()

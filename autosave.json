@@ -1,0 +1,53 @@
+{
+  "last_autosave": 1783924121.6933897,
+  "interval": 60.0,
+  "enabled_status": false,
+  "checkpoint_count": 5,
+  "checkpoints": [
+    {
+      "checkpoint_id": "f945c80e-413f-45fc-a999-a4c838b51091",
+      "timestamp": 1783924121.6220257,
+      "project_id": "default",
+      "changed_artifacts": [
+        "workspace.json"
+      ],
+      "checksum": "a3ddae52d23b0a20bc6995c45678f4c2"
+    },
+    {
+      "checkpoint_id": "fc8a0190-fa9d-4731-83f9-cfa96571a1ce",
+      "timestamp": 1783924121.6445458,
+      "project_id": "default",
+      "changed_artifacts": [
+        "workspace.json"
+      ],
+      "checksum": "4d67a8ce28c28e0c7a55da01af9756f7"
+    },
+    {
+      "checkpoint_id": "ac82f80b-276d-4136-b5dc-d56a025fecaf",
+      "timestamp": 1783924121.6620047,
+      "project_id": "default",
+      "changed_artifacts": [
+        "workspace.json"
+      ],
+      "checksum": "b4fb99b81b8bdab15a41fbcbbc2b9a9d"
+    },
+    {
+      "checkpoint_id": "479154e8-1c81-4840-9b20-28aaf609e4aa",
+      "timestamp": 1783924121.676626,
+      "project_id": "default",
+      "changed_artifacts": [
+        "workspace.json"
+      ],
+      "checksum": "e0baf74f074ed44629ddfc4b225f4596"
+    },
+    {
+      "checkpoint_id": "af0ae36e-393c-45a4-b8d7-fea6d1909505",
+      "timestamp": 1783924121.6933897,
+      "project_id": "default",
+      "changed_artifacts": [
+        "workspace.json"
+      ],
+      "checksum": "a29593e564df8a22ce7674d933333ec1"
+    }
+  ]
+}
