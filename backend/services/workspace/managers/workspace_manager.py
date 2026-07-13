@@ -9,6 +9,7 @@ from services.workspace.registry.project_registry import ProjectRegistry
 from services.workspace.snapshots.snapshot_manager import SnapshotManager
 from services.workspace.settings.settings_manager import SettingsManager
 from services.workspace.search.search_engine import SearchEngine
+from services.workspace.templates.template_manager import TemplateManager
 
 class WorkspaceManager:
     def __init__(self, root_path: str = ".") -> None:
@@ -18,6 +19,7 @@ class WorkspaceManager:
         self.registry = ProjectRegistry(storage_path=root_path, on_change_callback=self.refresh_search_index)
         self.snapshot_manager = SnapshotManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
         self.settings_manager = SettingsManager(storage_path=root_path)
+        self.template_manager = TemplateManager(storage_path=root_path, on_change_callback=self.refresh_search_index)
 
     def create_workspace(self, root_path: str, directories: List[str]) -> WorkspaceMetadata:
         workspace_id = str(uuid.uuid4())
@@ -75,7 +77,6 @@ class WorkspaceManager:
     def create_snapshot(self, project_id: str, description: str) -> Any:
         snap = self.snapshot_manager.create_snapshot(project_id, self.root_path, description)
         self.registry.history_manager.log_snapshot_creation(project_id, snap.snapshot_id)
-        # Callback will trigger refresh_search_index automatically
         return snap
 
     def restore_snapshot(self, snapshot_id: str) -> bool:
@@ -88,6 +89,12 @@ class WorkspaceManager:
         if res:
             self.registry.history_manager.log_snapshot_restore(project_id, snapshot_id)
         return res
+
+    def create_template(self, name: str, category: str, description: str, curriculum: str = "NGSS", grades: List[str] = None) -> Any:
+        return self.template_manager.create_template(name, category, description, curriculum, grades)
+
+    def apply_template(self, template_id: str, project_id: str) -> bool:
+        return self.template_manager.apply_template(template_id, project_id)
 
     def refresh_search_index(self) -> None:
         self.search_engine.indexer.clear()
@@ -107,3 +114,12 @@ class WorkspaceManager:
                 category="snapshot",
                 extra={"timestamp": s.creation_timestamp}
             )
+        for t in self.template_manager.templates:
+            self.search_engine.indexer.index_item(
+                item_id=t.template_id,
+                name=t.template_name,
+                description=t.description,
+                category="template",
+                extra={"timestamp": t.created_timestamp}
+            )
+        self.search_engine.indexer.save_index()

@@ -30,3 +30,6 @@ class SearchEngine:
 
     def search_history(self, query_str: str, exact: bool = False) -> List[Dict[str, Any]]:
         return self.search(query_str, category="history", exact=exact)
+
+    def search_templates(self, query_str: str, exact: bool = False) -> List[Dict[str, Any]]:
+        return self.search(query_str, category="template", exact=exact)
