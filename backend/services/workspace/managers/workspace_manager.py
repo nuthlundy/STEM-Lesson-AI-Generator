@@ -6,11 +6,14 @@ from typing import Dict, Any, List
 from services.workspace.schemas import WorkspaceMetadata
 from services.workspace.managers.directory_manager import DirectoryManager
 from services.workspace.registry.project_registry import ProjectRegistry
+from services.workspace.snapshots.snapshot_manager import SnapshotManager
 
 class WorkspaceManager:
     def __init__(self, root_path: str = ".") -> None:
+        self.root_path = root_path
         self.active_workspaces: Dict[str, WorkspaceMetadata] = {}
         self.registry = ProjectRegistry(storage_path=root_path)
+        self.snapshot_manager = SnapshotManager(storage_path=root_path)
 
     def create_workspace(self, root_path: str, directories: List[str]) -> WorkspaceMetadata:
         workspace_id = str(uuid.uuid4())
@@ -63,3 +66,19 @@ class WorkspaceManager:
             return DirectoryManager.verify_structure(root_path, meta.directories)
         except Exception:
             return False
+
+    def create_snapshot(self, project_id: str, description: str) -> Any:
+        snap = self.snapshot_manager.create_snapshot(project_id, self.root_path, description)
+        self.registry.history_manager.log_snapshot_creation(project_id, snap.snapshot_id)
+        return snap
+
+    def restore_snapshot(self, snapshot_id: str) -> bool:
+        project_id = "unknown"
+        for snap in self.snapshot_manager.snapshots:
+            if snap.snapshot_id == snapshot_id:
+                project_id = snap.project_id
+                break
+        res = self.snapshot_manager.restore_snapshot(snapshot_id, self.root_path)
+        if res:
+            self.registry.history_manager.log_snapshot_restore(project_id, snapshot_id)
+        return res
