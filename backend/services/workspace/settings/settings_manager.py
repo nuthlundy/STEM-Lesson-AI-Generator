@@ -39,3 +39,8 @@ class SettingsManager:
             self.save_settings()
             return True
         return False
+
+    def switch_profile(self, profile_id: str) -> bool:
+        self.settings.active_profile_id = profile_id
+        self.save_settings()
+        return True

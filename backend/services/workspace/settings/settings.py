@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 class GlobalSettings(BaseModel):
     application_version: str = "1.0.0"
@@ -9,3 +9,4 @@ class GlobalSettings(BaseModel):
     export_preferences: Dict[str, Any] = {}
     autosave_interval: int = 300
     logging_level: str = "INFO"
+    active_profile_id: Optional[str] = None
