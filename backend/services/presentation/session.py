@@ -1,10 +1,11 @@
 import json
 import os
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from services.presentation.navigation.controller import NavigationController
 from services.presentation.timing.timer import PresentationTimer
 from services.presentation.presenter.checklist import TeachingChecklistResolver
 from services.presentation.presenter.objectives import LearningObjectivesResolver
+from services.presentation.schemas import PresentationAIMetadata
 
 class PresentationSessionBuilder:
     @staticmethod
@@ -12,7 +13,8 @@ class PresentationSessionBuilder:
         workspace_root: str,
         navigation: NavigationController,
         timer: PresentationTimer,
-        metadata: Dict[str, Any]
+        metadata: Dict[str, Any],
+        ai_metadata: Optional[PresentationAIMetadata] = None
     ) -> Dict[str, Any]:
         delivery_data = {
             "navigation_state": {
@@ -28,7 +30,8 @@ class PresentationSessionBuilder:
                 "elapsed_seconds": timer.get_elapsed_seconds(),
                 "estimated_total_seconds": navigation.navigator.total_slides * 300
             },
-            "session_metadata": metadata
+            "session_metadata": metadata,
+            "ai_metadata": ai_metadata.model_dump() if ai_metadata else None
         }
         
         output_path = os.path.join(workspace_root, "presentation_delivery.json")

@@ -10,12 +10,12 @@ class PresentationAIMergeEngine:
             merged = list(det_list)
             existing = set()
             for item in merged:
-                existing.add(item.model_dump_json())
+                existing.add(getattr(item, "suggestion", getattr(item, "question", getattr(item, "prompt", getattr(item, "tip", "")))))
             for item in ai_list:
-                dump = item.model_dump_json()
-                if dump not in existing:
+                key = getattr(item, "suggestion", getattr(item, "question", getattr(item, "prompt", getattr(item, "tip", ""))))
+                if key not in existing:
                     merged.append(item)
-                    existing.add(dump)
+                    existing.add(key)
             return merged
 
         session.ai_metadata.speaking_suggestions = merge_list(
@@ -34,4 +34,12 @@ class PresentationAIMergeEngine:
             session.ai_metadata.transition_suggestions, ai_data.transition_suggestions
         )
         
+        if "ai_confidence_summary" not in session.metadata:
+            scores = []
+            for items in [session.ai_metadata.speaking_suggestions, session.ai_metadata.audience_questions, 
+                          session.ai_metadata.discussion_prompts, session.ai_metadata.teaching_tips, session.ai_metadata.transition_suggestions]:
+                scores.extend([item.confidence.score for item in items])
+            avg_score = sum(scores) / len(scores) if scores else 1.0
+            session.metadata["ai_confidence_summary"] = avg_score
+            
         return session
