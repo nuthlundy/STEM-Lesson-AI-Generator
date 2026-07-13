@@ -9,6 +9,7 @@ from services.presentation.writers.json_writer import JsonPresentationWriter
 from services.presentation.navigation.controller import NavigationController
 from services.presentation.timing.timer import PresentationTimer
 from services.presentation.session import PresentationSessionBuilder
+from services.presentation.classroom import ClassroomInteractionManager
 
 class PresentationEngine:
     def __init__(self, workspace_root: str = "."):
@@ -17,12 +18,14 @@ class PresentationEngine:
         self._initialized = False
         self.navigation_controller: Optional[NavigationController] = None
         self.timer: Optional[PresentationTimer] = None
+        self.classroom_manager: Optional[ClassroomInteractionManager] = None
 
     def initialize(self) -> None:
         self._initialized = True
         self.navigation_controller = NavigationController()
         self.timer = PresentationTimer()
         self.timer.start()
+        self.classroom_manager = ClassroomInteractionManager()
 
     def before_present(self, presentation_path: str) -> None:
         if not os.path.exists(presentation_path):
@@ -71,7 +74,8 @@ class PresentationEngine:
                 workspace_root=self.workspace_root,
                 navigation=self.navigation_controller,
                 timer=self.timer,
-                metadata=session.metadata
+                metadata=session.metadata,
+                ai_metadata=session.ai_metadata
             )
 
     def process(self, presentation_path: str, config: Optional[PresentationConfig] = None, presenter_type: str = "deterministic") -> PresentationSessionModel:
@@ -87,3 +91,4 @@ class PresentationEngine:
         self._initialized = False
         self.navigation_controller = None
         self.timer = None
+        self.classroom_manager = None
