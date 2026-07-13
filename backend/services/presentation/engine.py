@@ -13,6 +13,8 @@ from services.presentation.classroom import ClassroomInteractionManager
 from services.presentation.annotation import AnnotationManager
 from services.presentation.utilities import UtilityManager
 from services.presentation.utilities.statistics import AnalyticsManager
+from services.presentation.export.factory import PresentationExportFactory
+from services.presentation.export.manager import PresentationExportManager
 
 class PresentationEngine:
     def __init__(self, workspace_root: str = "."):
@@ -25,6 +27,8 @@ class PresentationEngine:
         self.annotation_manager: Optional[AnnotationManager] = None
         self.utility_manager: Optional[UtilityManager] = None
         self.analytics_manager: Optional[AnalyticsManager] = None
+        self.export_factory: Optional[PresentationExportFactory] = None
+        self.export_manager: Optional[PresentationExportManager] = None
 
     def initialize(self) -> None:
         self._initialized = True
@@ -35,6 +39,8 @@ class PresentationEngine:
         self.annotation_manager = AnnotationManager()
         self.utility_manager = UtilityManager()
         self.analytics_manager = AnalyticsManager()
+        self.export_factory = PresentationExportFactory()
+        self.export_manager = PresentationExportManager(factory=self.export_factory)
 
     def before_present(self, presentation_path: str) -> None:
         if not os.path.exists(presentation_path):
@@ -107,3 +113,5 @@ class PresentationEngine:
         self.annotation_manager = None
         self.utility_manager = None
         self.analytics_manager = None
+        self.export_factory = None
+        self.export_manager = None
