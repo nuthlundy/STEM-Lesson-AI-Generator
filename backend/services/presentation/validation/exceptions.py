@@ -1,0 +1,2 @@
+class PresentationValidationError(Exception):
+    pass

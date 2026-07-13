@@ -15,6 +15,8 @@ from services.presentation.utilities import UtilityManager
 from services.presentation.utilities.statistics import AnalyticsManager
 from services.presentation.export.factory import PresentationExportFactory
 from services.presentation.export.manager import PresentationExportManager
+from services.presentation.validation.validator import PresentationValidator
+from services.presentation.quality.analyzer import QualityAnalyzer
 
 class PresentationEngine:
     def __init__(self, workspace_root: str = "."):
@@ -100,6 +102,12 @@ class PresentationEngine:
         output_path = os.path.join(self.workspace_root, "presentation_session.json")
         writer = JsonPresentationWriter()
         writer.write(session, output_path)
+        
+        validator = PresentationValidator()
+        validator.validate_session(session, self.workspace_root)
+        
+        analyzer = QualityAnalyzer()
+        analyzer.analyze_presentation(session, self.workspace_root)
         
         if self._initialized and self.navigation_controller and self.timer:
             PresentationSessionBuilder.build_delivery_session(
