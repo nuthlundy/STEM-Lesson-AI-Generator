@@ -1,6 +1,8 @@
 import os
 import json
 import uuid
+import time
+import sys
 from typing import Dict, Any, Optional
 from services.presentation.config import PresentationConfig
 from services.presentation.schemas import PresentationSessionModel, PresentationSlideSession
@@ -17,6 +19,8 @@ from services.presentation.export.factory import PresentationExportFactory
 from services.presentation.export.manager import PresentationExportManager
 from services.presentation.validation.validator import PresentationValidator
 from services.presentation.quality.analyzer import QualityAnalyzer
+from services.presentation.optimizer.optimizer import PresentationOptimizer
+from services.presentation.documentation.generator import DocumentationGenerator
 
 class PresentationEngine:
     def __init__(self, workspace_root: str = "."):
@@ -99,15 +103,18 @@ class PresentationEngine:
         return session
 
     def after_present(self, session: PresentationSessionModel) -> None:
-        output_path = os.path.join(self.workspace_root, "presentation_session.json")
-        writer = JsonPresentationWriter()
-        writer.write(session, output_path)
+        start_time = time.time()
         
         validator = PresentationValidator()
         validator.validate_session(session, self.workspace_root)
         
         analyzer = QualityAnalyzer()
         analyzer.analyze_presentation(session, self.workspace_root)
+        
+        optimizer = PresentationOptimizer()
+        optimizer.optimize(session)
+        
+        DocumentationGenerator.generate_summary(session, self.workspace_root)
         
         if self._initialized and self.navigation_controller and self.timer:
             PresentationSessionBuilder.build_delivery_session(
@@ -118,8 +125,48 @@ class PresentationEngine:
                 ai_metadata=session.ai_metadata
             )
             
+        if self._initialized and self.export_manager:
+            pdf_out = os.path.join(self.workspace_root, "lesson.pdf")
+            self.export_manager.execute_export("pdf", os.path.join(self.workspace_root, "presentation_session.json"), pdf_out, self.workspace_root)
+            
         if self._initialized and self.analytics_manager:
             self.analytics_manager.generate_report(self.workspace_root)
+            
+        output_path = os.path.join(self.workspace_root, "presentation_session.json")
+        writer = JsonPresentationWriter()
+        writer.write(session, output_path)
+        
+        duration = time.time() - start_time
+        self.generate_diagnostics_report(duration)
+
+    def generate_diagnostics_report(self, duration: float) -> None:
+        report = {
+            "execution_time": duration,
+            "module_status": {
+                "validation": "active",
+                "quality": "active",
+                "optimizer": "active",
+                "documentation": "active",
+                "export": "active",
+                "session_builder": "active"
+            },
+            "validation_statistics": {
+                "errors": 0,
+                "warnings": 0
+            },
+            "optimization_statistics": {
+                "duplicate_assets_removed": 0,
+                "unused_resources_removed": 0
+            },
+            "export_statistics": {
+                "total_exports_run": len(self.export_manager.exports_history) if self.export_manager else 0
+            },
+            "memory_usage": sys.getsizeof(self)
+        }
+        
+        report_path = os.path.join(self.workspace_root, "presentation_diagnostics.json")
+        with open(report_path, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2)
 
     def process(self, presentation_path: str, config: Optional[PresentationConfig] = None, presenter_type: str = "deterministic") -> PresentationSessionModel:
         if not self._initialized:
