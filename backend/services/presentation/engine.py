@@ -10,6 +10,9 @@ from services.presentation.navigation.controller import NavigationController
 from services.presentation.timing.timer import PresentationTimer
 from services.presentation.session import PresentationSessionBuilder
 from services.presentation.classroom import ClassroomInteractionManager
+from services.presentation.annotation import AnnotationManager
+from services.presentation.utilities import UtilityManager
+from services.presentation.utilities.statistics import AnalyticsManager
 
 class PresentationEngine:
     def __init__(self, workspace_root: str = "."):
@@ -19,6 +22,9 @@ class PresentationEngine:
         self.navigation_controller: Optional[NavigationController] = None
         self.timer: Optional[PresentationTimer] = None
         self.classroom_manager: Optional[ClassroomInteractionManager] = None
+        self.annotation_manager: Optional[AnnotationManager] = None
+        self.utility_manager: Optional[UtilityManager] = None
+        self.analytics_manager: Optional[AnalyticsManager] = None
 
     def initialize(self) -> None:
         self._initialized = True
@@ -26,6 +32,9 @@ class PresentationEngine:
         self.timer = PresentationTimer()
         self.timer.start()
         self.classroom_manager = ClassroomInteractionManager()
+        self.annotation_manager = AnnotationManager()
+        self.utility_manager = UtilityManager()
+        self.analytics_manager = AnalyticsManager()
 
     def before_present(self, presentation_path: str) -> None:
         if not os.path.exists(presentation_path):
@@ -77,6 +86,9 @@ class PresentationEngine:
                 metadata=session.metadata,
                 ai_metadata=session.ai_metadata
             )
+            
+        if self._initialized and self.analytics_manager:
+            self.analytics_manager.generate_report(self.workspace_root)
 
     def process(self, presentation_path: str, config: Optional[PresentationConfig] = None, presenter_type: str = "deterministic") -> PresentationSessionModel:
         if not self._initialized:
@@ -92,3 +104,6 @@ class PresentationEngine:
         self.navigation_controller = None
         self.timer = None
         self.classroom_manager = None
+        self.annotation_manager = None
+        self.utility_manager = None
+        self.analytics_manager = None
