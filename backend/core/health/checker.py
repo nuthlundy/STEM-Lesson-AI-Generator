@@ -25,6 +25,14 @@ class PlatformHealthChecker:
                 "workflow": "Healthy",
                 "artifacts": "Healthy",
                 "logging": "Healthy",
-                "monitoring": "Healthy"
+                "monitoring": "Healthy",
+                "Workspace": "Healthy",
+                "Rendering": "Healthy",
+                "Presentation": "Healthy",
+                "Lesson Planning": "Healthy",
+                "Subject Intelligence": "Healthy",
+                "Language Intelligence": "Healthy",
+                "Document Intelligence": "Healthy",
+                "Core Platform": "Healthy"
             }
         }

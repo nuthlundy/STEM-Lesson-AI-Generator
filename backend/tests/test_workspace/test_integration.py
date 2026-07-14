@@ -3,6 +3,8 @@ import tempfile
 import os
 import json
 from services.workspace.engine import WorkspaceEngine
+from core.health.report import PlatformHealthReporter
+from core.documentation.generator import PlatformDocGenerator
 
 class TestWorkspaceIntegration(unittest.TestCase):
     def setUp(self):
@@ -99,8 +101,8 @@ class TestWorkspaceIntegration(unittest.TestCase):
         self.engine.save_diagnostics()
         with open(diag_path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        self.assertIn("startup_time", data)
-        self.assertEqual(data["module_health"]["workspace_manager"], "healthy")
+        self.assertIn("startup_duration", data)
+        self.assertEqual(data["module_status"]["WorkspaceEngine"], "active")
 
     def test_summary_content_improved_fields(self):
         self.engine.initialize()
@@ -118,6 +120,68 @@ class TestWorkspaceIntegration(unittest.TestCase):
     def test_engine_initialization_with_custom_path(self):
         eng = WorkspaceEngine(root_path=self.storage_path)
         self.assertEqual(eng.root_path, self.storage_path)
+
+    # Milestone 6B (Production Hardening) New Tests
+    def test_diagnostics_expanded_fields(self):
+        self.engine.initialize()
+        diag_path = os.path.join(self.storage_path, "workspace_diagnostics.json")
+        with open(diag_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.assertIn("module_status", data)
+        self.assertIn("startup_duration", data)
+        self.assertIn("enabled_services", data)
+        self.assertIn("validation_summary", data)
+        self.assertIn("execution_statistics", data)
+        self.assertIn("health_overview", data)
+
+    def test_startup_required_directories_exist(self):
+        non_existent_dir = os.path.join(self.storage_path, "sub_new_folder")
+        eng = WorkspaceEngine(root_path=non_existent_dir)
+        eng.initialize()
+        self.assertTrue(os.path.exists(non_existent_dir))
+
+    def test_startup_required_config_files_exist(self):
+        self.engine.initialize()
+        for f in ["projects.json", "templates.json", "autosave.json", "settings.json"]:
+            self.assertTrue(os.path.exists(os.path.join(self.storage_path, f)))
+
+    def test_startup_non_writable_workspace(self):
+        # We simulate a non-writable path by pointing to an invalid directory or simulating it
+        # Under windows, pointing to a read-only area or invalid system path raises RuntimeError
+        invalid_path = "Z:\\non_existent_drive_faked"
+        eng = WorkspaceEngine(root_path=invalid_path)
+        with self.assertRaises(Exception):
+            eng.initialize()
+
+    def test_startup_artifact_directory_created(self):
+        self.engine.initialize()
+        self.assertTrue(os.path.exists(os.path.join(self.storage_path, "artifacts")))
+
+    def test_health_reporter_includes_workspace(self):
+        report = PlatformHealthReporter.generate_report(workspace_root=self.storage_path)
+        self.assertIn("Workspace", report["health"]["subsystems"])
+        self.assertIn("Rendering", report["health"]["subsystems"])
+        self.assertIn("Presentation", report["health"]["subsystems"])
+
+    def test_platform_doc_generator_includes_module_inventory(self):
+        summary = PlatformDocGenerator.generate_summary(workspace_root=self.storage_path)
+        self.assertIn("module_inventory", summary)
+        self.assertIn("workspace", summary["module_inventory"])
+
+    def test_platform_doc_generator_includes_service_inventory(self):
+        summary = PlatformDocGenerator.generate_summary(workspace_root=self.storage_path)
+        self.assertIn("service_inventory", summary)
+        self.assertIn("WorkspaceEngine", summary["service_inventory"])
+
+    def test_platform_doc_generator_includes_production_readiness(self):
+        summary = PlatformDocGenerator.generate_summary(workspace_root=self.storage_path)
+        self.assertIn("production_readiness_summary", summary)
+        self.assertEqual(summary["production_readiness_summary"]["status"], "ready")
+
+    def test_lifecycle_reinitialization_failure(self):
+        self.engine.initialize()
+        with self.assertRaises(RuntimeError):
+            self.engine.initialize()
 
 if __name__ == "__main__":
     unittest.main()

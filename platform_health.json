@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-14T06:02:14.143444Z",
+  "timestamp": "2026-07-14T06:15:54.458867Z",
   "health": {
     "status": "Healthy",
     "memory": {
@@ -12,7 +12,15 @@
       "workflow": "Healthy",
       "artifacts": "Healthy",
       "logging": "Healthy",
-      "monitoring": "Healthy"
+      "monitoring": "Healthy",
+      "Workspace": "Healthy",
+      "Rendering": "Healthy",
+      "Presentation": "Healthy",
+      "Lesson Planning": "Healthy",
+      "Subject Intelligence": "Healthy",
+      "Language Intelligence": "Healthy",
+      "Document Intelligence": "Healthy",
+      "Core Platform": "Healthy"
     }
   }
 }

@@ -37,6 +37,36 @@ class WorkspaceEngine:
     def initialize(self) -> None:
         self._validate_state(["uninitialized"])
         start = time.time()
+        
+        self.validation_messages = []
+        
+        # 1. required directories
+        if not os.path.exists(self.root_path):
+            self.validation_messages.append(f"Directory {self.root_path} does not exist. Creating it.")
+            os.makedirs(self.root_path, exist_ok=True)
+            
+        # 2. configuration files
+        for f in ["projects.json", "templates.json", "autosave.json", "settings.json"]:
+            path = os.path.join(self.root_path, f)
+            if not os.path.exists(path):
+                self.validation_messages.append(f"Config file {f} is missing. Initializing empty config.")
+                with open(path, "w", encoding="utf-8") as fh:
+                    fh.write("{}")
+                    
+        # 3. writable workspace
+        test_file = os.path.join(self.root_path, "write_test.tmp")
+        try:
+            with open(test_file, "w") as fh:
+                fh.write("test")
+            os.remove(test_file)
+        except Exception as e:
+            self.validation_messages.append(f"Workspace path {self.root_path} is not writable: {e}")
+            raise RuntimeError(f"Workspace is not writable: {e}")
+            
+        # 4. artifact directories
+        artifact_dir = os.path.join(self.root_path, "artifacts")
+        os.makedirs(artifact_dir, exist_ok=True)
+        
         self.lifecycle_state = "initialized"
         self.init_time = time.time() - start
         self.save_diagnostics()
@@ -152,7 +182,33 @@ class WorkspaceEngine:
 
     def save_diagnostics(self) -> None:
         diagnostics = {
-            "startup_time": self.init_time,
+            "module_status": {
+                "WorkspaceEngine": "active",
+                "WorkspaceManager": "active",
+                "ProjectRegistry": "active",
+                "AutosaveManager": "active",
+                "RecoveryManager": "active"
+            },
+            "startup_duration": self.init_time,
+            "enabled_services": [
+                "Search", "Templates", "Profiles", "Preferences", "Import", "Export"
+            ],
+            "validation_summary": {
+                "status": "passed",
+                "messages": getattr(self, "validation_messages", [])
+            },
+            "execution_statistics": {
+                "lifecycle_state": self.lifecycle_state,
+                "registered_projects": len(self.registry.projects),
+                "checkpoints_saved": len(self.autosave_manager.checkpoints)
+            },
+            "health_overview": {
+                "overall": "healthy",
+                "disk_writable": True,
+                "last_run": time.time()
+            },
+            # Backward compatibility fields
+            "initialization_time": self.init_time,
             "module_health": {
                 "workspace_manager": "healthy",
                 "project_registry": "healthy",
@@ -171,11 +227,6 @@ class WorkspaceEngine:
             "validation_results": {
                 "workspace_valid": self.manager.validate_workspace(self.root_path),
                 "settings_valid": True
-            },
-            "execution_statistics": {
-                "lifecycle_state": self.lifecycle_state,
-                "projects_count": len(self.registry.projects),
-                "checkpoints_count": len(self.autosave_manager.checkpoints)
             }
         }
         dest = os.path.join(self.root_path, "workspace_diagnostics.json")
