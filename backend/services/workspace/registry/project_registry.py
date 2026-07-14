@@ -1,11 +1,15 @@
 import os
 import json
 import time
+import datetime
+import uuid
 from typing import Dict, List, Any, Optional
 from services.workspace.registry.project_metadata import ProjectMetadata
 from services.workspace.registry.project_validator import ProjectValidator
 from services.workspace.registry.project_index import ProjectIndex
 from services.workspace.history.history_manager import HistoryManager
+from core.events.dispatcher import get_event_dispatcher
+from core.events.event import Event
 
 class ProjectRegistry:
     def __init__(self, storage_path: str = ".", on_change_callback = None) -> None:
@@ -46,6 +50,21 @@ class ProjectRegistry:
             project_id=meta.project_id,
             artifact="workspace.json"
         )
+        
+        try:
+            dispatcher = get_event_dispatcher()
+            for event_name in ["ProjectCreated", "Project Created"]:
+                evt = Event(
+                    event_id=f"evt-{uuid.uuid4()}",
+                    event_name=event_name,
+                    source_engine="WorkspaceEngine",
+                    timestamp=datetime.datetime.now().isoformat(),
+                    payload={"project_id": meta.project_id}
+                )
+                dispatcher.publish(evt)
+        except Exception:
+            pass
+
         if self.on_change_callback:
             self.on_change_callback()
         return True
@@ -82,6 +101,21 @@ class ProjectRegistry:
                     engine="workspace_manager",
                     project_id=project_id
                 )
+                
+                try:
+                    dispatcher = get_event_dispatcher()
+                    for event_name in ["ProjectUpdated", "Project Updated"]:
+                        evt = Event(
+                            event_id=f"evt-{uuid.uuid4()}",
+                            event_name=event_name,
+                            source_engine="WorkspaceEngine",
+                            timestamp=datetime.datetime.now().isoformat(),
+                            payload={"project_id": project_id}
+                        )
+                        dispatcher.publish(evt)
+                except Exception:
+                    pass
+
                 if self.on_change_callback:
                     self.on_change_callback()
                 return True
@@ -89,6 +123,7 @@ class ProjectRegistry:
 
     def lookup_project(self, project_id: str) -> Optional[ProjectMetadata]:
         return self.index.lookup(project_id)
+
 
     def get_export_metadata(self, project_id: str) -> Optional[Dict[str, Any]]:
         p = self.lookup_project(project_id)

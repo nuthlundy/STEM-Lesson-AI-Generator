@@ -76,6 +76,22 @@ class AutosaveManager:
         if AutosaveValidator.validate_checkpoint(chk):
             self.checkpoints.append(chk)
             self.save_config()
+            try:
+                from core.events.dispatcher import get_event_dispatcher
+                from core.events.event import Event
+                import datetime
+                dispatcher = get_event_dispatcher()
+                for name in ["AutosaveCompleted", "Autosave Completed"]:
+                    evt = Event(
+                        event_id=f"evt-{uuid.uuid4()}",
+                        event_name=name,
+                        source_engine="WorkspaceEngine",
+                        timestamp=datetime.datetime.now().isoformat(),
+                        payload={"project_id": project_id}
+                    )
+                    dispatcher.publish(evt)
+            except Exception:
+                pass
             return chk
         return None
 

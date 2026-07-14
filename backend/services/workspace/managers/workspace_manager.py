@@ -106,14 +106,46 @@ class WorkspaceManager:
     def apply_template(self, template_id: str, project_id: str) -> bool:
         return self.template_manager.apply_template(template_id, project_id)
 
+    def _publish_event(self, event_name: str, payload: dict = None) -> None:
+        try:
+            from core.events.dispatcher import get_event_dispatcher
+            from core.events.event import Event
+            import datetime
+            import uuid
+            dispatcher = get_event_dispatcher()
+            
+            camel_name = event_name.replace(" ", "")
+            evt = Event(
+                event_id=f"evt-{uuid.uuid4()}",
+                event_name=camel_name,
+                source_engine="WorkspaceEngine",
+                timestamp=datetime.datetime.now().isoformat(),
+                payload=payload or {}
+            )
+            dispatcher.publish(evt)
+            
+            if camel_name != event_name:
+                evt_spaced = Event(
+                    event_id=f"evt-{uuid.uuid4()}",
+                    event_name=event_name,
+                    source_engine="WorkspaceEngine",
+                    timestamp=datetime.datetime.now().isoformat(),
+                    payload=payload or {}
+                )
+                dispatcher.publish(evt_spaced)
+        except Exception:
+            pass
+
     def import_project(self, file_path: str) -> Dict[str, Any]:
         res = self.import_manager.import_project(file_path)
         self.handle_project_change()
+        self._publish_event("Import Completed", {"file_path": file_path})
         return res
 
     def import_workspace(self, file_path: str) -> Dict[str, Any]:
         res = self.import_manager.import_workspace(file_path)
         self.handle_project_change()
+        self._publish_event("Import Completed", {"file_path": file_path})
         return res
 
     def export_project(self, project_id: str, dest_path: str) -> Dict[str, Any]:
@@ -122,6 +154,8 @@ class WorkspaceManager:
             raise ValueError(f"Project {project_id} not registered")
         res = self.export_manager.export_project(meta, dest_path)
         self.autosave_manager.trigger_autosave(project_id)
+        self._publish_event("Presentation Exported", {"project_id": project_id, "dest_path": dest_path})
+        self._publish_event("Export Completed", {"project_id": project_id, "dest_path": dest_path})
         return res
 
     def export_workspace(self, workspace_id: str, dest_path: str) -> Dict[str, Any]:
@@ -130,26 +164,38 @@ class WorkspaceManager:
             raise ValueError(f"Workspace {workspace_id} not active")
         res = self.export_manager.export_workspace(meta.model_dump(), dest_path)
         self.autosave_manager.trigger_autosave(workspace_id)
+        self._publish_event("Presentation Exported", {"workspace_id": workspace_id, "dest_path": dest_path})
+        self._publish_event("Export Completed", {"workspace_id": workspace_id, "dest_path": dest_path})
         return res
 
     def generate_lesson(self, *args, **kwargs) -> Any:
         self.autosave_manager.trigger_autosave()
+        self._publish_event("Lesson Generated", kwargs)
         return None
 
     def generate_presentation(self, *args, **kwargs) -> Any:
         self.autosave_manager.trigger_autosave()
+        self._publish_event("Rendering Finished", kwargs)
         return None
 
     def recover_workspace(self) -> Dict[str, Any]:
         for ws in self.active_workspaces.values():
-            return self.recovery_manager.recover_workspace(ws.model_dump())
-        return self.recovery_manager.recover_workspace({"workspace_id": "default", "root_path": self.root_path})
+            res = self.recovery_manager.recover_workspace(ws.model_dump())
+            self._publish_event("Recovery Completed", res)
+            return res
+        res = self.recovery_manager.recover_workspace({"workspace_id": "default", "root_path": self.root_path})
+        self._publish_event("Recovery Completed", res)
+        return res
 
     def recover_project(self, project_id: str) -> Dict[str, Any]:
         meta = self.registry.lookup_project(project_id)
         if meta:
-            return self.recovery_manager.recover_project(meta.model_dump())
-        return self.recovery_manager.recover_project({"project_id": project_id})
+            res = self.recovery_manager.recover_project(meta.model_dump())
+            self._publish_event("Recovery Completed", res)
+            return res
+        res = self.recovery_manager.recover_project({"project_id": project_id})
+        self._publish_event("Recovery Completed", res)
+        return res
 
     def handle_project_change(self) -> None:
         self.refresh_search_index()
