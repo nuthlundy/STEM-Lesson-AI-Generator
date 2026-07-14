@@ -1,16 +1,16 @@
 {
   "pipeline_name": "Standard Pipeline",
-  "total_duration": 0.0005,
-  "throughput": 2000.0,
+  "total_duration": 0.0,
+  "throughput": 0.0,
   "success_count": 1,
   "failure_count": 0,
   "retry_count": 0,
   "peak_memory_bytes": 52428800,
-  "average_processing_time": 0.0005,
+  "average_processing_time": 0.0,
   "stage_metrics": {
     "stage1": {
       "stage_id": "stage1",
-      "duration": 0.0005,
+      "duration": 0.0,
       "memory_usage_bytes": 52428800,
       "success_count": 1,
       "failure_count": 0,

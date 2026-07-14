@@ -1,3 +1,4 @@
+import os
 from core.config.settings import Settings
 from core.config.providers import Provider
 from core.config.environments import Environment
@@ -23,6 +24,27 @@ class ConfigValidator:
             
         if settings.timeout <= 0.0:
             raise ValidationError(f"Invalid timeout value: {settings.timeout}. Must be greater than 0.")
+
+        # directory validation
+        workspace = getattr(settings, "workspace", None)
+        if workspace:
+            try:
+                if not os.path.exists(workspace):
+                    os.makedirs(workspace, exist_ok=True)
+                if not os.access(workspace, os.W_OK):
+                    raise ValidationError(f"Workspace root directory '{workspace}' is not writable.")
+            except Exception as e:
+                raise ValidationError(f"Workspace root directory '{workspace}' validation failed: {e}")
+
+
+
+        # dependency validation
+        try:
+            import fitz
+            import pydantic
+        except ImportError as e:
+            raise ValidationError(f"Required system dependencies missing: {e}")
+
             
     @staticmethod
     def validate_provider(provider: Provider) -> None:
