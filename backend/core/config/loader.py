@@ -7,8 +7,16 @@ from core.config.validator import ConfigValidator
 class ConfigLoader:
     """Loads configuration settings from defaults, environment variables, or files."""
     
+    _cached_settings: Dict[str, Settings] = {}
+
     @staticmethod
     def load(file_path: Optional[str] = None) -> Settings:
+        env_state = tuple(sorted((k, v) for k, v in os.environ.items() if k.startswith("STEM_")))
+        cache_key = (file_path or "default", env_state)
+        if cache_key in ConfigLoader._cached_settings:
+            return ConfigLoader._cached_settings[cache_key]
+
+
         config_dict: Dict[str, Any] = {}
         
         if file_path and os.path.exists(file_path):
@@ -41,4 +49,6 @@ class ConfigLoader:
                     
         settings = Settings(**config_dict)
         ConfigValidator.validate_settings(settings)
+        ConfigLoader._cached_settings[cache_key] = settings
         return settings
+

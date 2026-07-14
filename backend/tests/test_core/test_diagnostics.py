@@ -227,6 +227,58 @@ class TestDiagnostics(unittest.TestCase):
         self.assertEqual(len(res["broken_plugins"]), 1)
         self.assertIn("Boom", res["broken_plugins"][0]["reason"])
 
+    # Milestone 3 Performance and Caching Tests
+    def test_diagnostics_reporter_performance_startup_duration(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            report = DiagnosticsReporter.generate_report(workspace_root=tmp_dir)
+            self.assertIn("startup_duration_sec", report)
+            self.assertIsInstance(report["startup_duration_sec"], float)
+
+    def test_diagnostics_reporter_performance_memory_stats(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            report = DiagnosticsReporter.generate_report(workspace_root=tmp_dir)
+            self.assertIn("memory_statistics", report)
+            self.assertIn("rss_mb", report["memory_statistics"])
+
+    def test_diagnostics_reporter_performance_optimization_summary(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            report = DiagnosticsReporter.generate_report(workspace_root=tmp_dir)
+            self.assertIn("optimization_summary", report)
+            self.assertTrue(report["optimization_summary"]["layout_cache_enabled"])
+
+    def test_layout_builder_cache_efficiency(self):
+        from services.rendering.layout.builder import LayoutBuilder
+        builder = LayoutBuilder()
+        builder._cached_columns.clear()
+        
+        # First call calculates and caches
+        layout1 = builder.build_slide_layout(num_columns=2)
+        self.assertEqual(len(builder._cached_columns), 1)
+        
+        # Second call hits cache
+        layout2 = builder.build_slide_layout(num_columns=2)
+        self.assertEqual(len(builder._cached_columns), 1)
+        self.assertEqual(layout1["columns"], layout2["columns"])
+
+    def test_config_loader_cache_efficiency(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            config_path = os.path.join(tmp_dir, "app_config.json")
+            with open(config_path, "w") as fh:
+                json.dump({"environment": "testing", "retry_policy": 4}, fh)
+                
+            from core.config.loader import ConfigLoader
+            ConfigLoader._cached_settings.clear()
+            
+            # Load 1
+            s1 = ConfigLoader.load(config_path)
+            self.assertEqual(s1.retry_policy, 4)
+            self.assertTrue(any(k[0] == config_path for k in ConfigLoader._cached_settings))
+            
+            # Load 2 (Hits Cache)
+            s2 = ConfigLoader.load(config_path)
+            self.assertIs(s1, s2)
+
 
 if __name__ == "__main__":
     unittest.main()
+
