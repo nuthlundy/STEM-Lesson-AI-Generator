@@ -73,6 +73,27 @@ Located in `backend/services/language_intelligence/`. This engine performs text 
 *   **`DeterministicProcessor` (`processors/deterministic.py`)**: Executes deterministic text cleaning and basic character-set language analysis (e.g. `en`). Assigns `SemanticRole.UNKNOWN` and a `null` confidence score.
 *   **`GeminiProcessor` (`processors/gemini_processor.py`)**: Interacts with the Gemini API using `google.generativeai` to assign semantic roles (`definition`, `theorem`, `example`, `explanation`) and extract technical keywords. Implements a fail-safe strategy: if keys are missing or requests fail, it falls back to the deterministic pipeline.
 
+### 3.3 Subject Intelligence Engine (SIE)
+Located in `backend/services/subject_intelligence/`. This engine extracts domain-specific concepts (e.g. mathematical physics, chemistry) and establishes relational learning taxonomies.
+*   **`SubjectIntelligenceEngine` (`engine.py`)**: Coordinates the processing steps, outputting `lesson_subject.json`, `lesson_learning_objectives.json`, and `lesson_instructional_model.json`.
+
+### 3.4 Lesson Planning Engine (LPE)
+Located in `backend/services/lesson_planning/`. Maps concepts to pedagogically sound lesson plans based on structures like the 5E Instructional Model.
+*   **`LessonPlanningEngine` (`engine.py`)**: Orchestrates the generation of assessment plans, teaching blueprints, and learning sequences, outputting `lesson_plan.json`.
+
+### 3.5 Rendering Engine (RE)
+Located in `backend/services/rendering/`. Converts lesson plans into interactive slide layouts.
+*   **`RenderingEngine` (`engine.py`)**: Renders layout structures and themes, writing `lesson_render.json` and `lesson_themed.json`.
+
+### 3.6 Presentation Engine (PE)
+Located in `backend/services/presentation/`. Transforms themed layouts into clean interactive slide decks and exports them.
+*   **`PresentationEngine` (`engine.py`)**: Validates slides content and generates physical deliverables like `presentation_session.json` and `lesson.pdf`.
+
+### 3.7 Workspace Engine
+Located in `backend/services/workspace/`. Implements templates library, project registries, settings, profiles, search indexes, autosaves, and automated workspace recovery repairs.
+*   **`WorkspaceEngine` (`engine.py`)**: Coordinates all lifecycle actions (initialize, load, save, close, shutdown, recovery) and registers cross-module event dispatching.
+
+
 ---
 
 ## 4. Canonical Schema Contracts

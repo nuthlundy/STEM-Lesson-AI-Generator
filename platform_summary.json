@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-07-14T09:56:57.140658Z",
+  "timestamp": "2026-07-15T01:04:30.883298Z",
   "metadata": {
     "version": "1.0.0",
     "environment": "production"
@@ -18,7 +18,11 @@
   "supported_engines": [
     "Document Intelligence Engine",
     "Subject Intelligence Engine",
-    "Lesson Planning Engine"
+    "Lesson Planning Engine",
+    "Language Intelligence Engine",
+    "Rendering Engine",
+    "Presentation Engine",
+    "WorkspaceEngine"
   ],
   "module_inventory": [
     "workspace",
@@ -34,13 +38,15 @@
     "WorkspaceEngine",
     "DocumentIntelligenceEngine",
     "SubjectIntelligenceEngine",
+    "LanguageIntelligenceEngine",
     "LessonPlanningEngine",
     "PresentationEngine",
+    "RenderingEngine",
     "EventDispatcher"
   ],
   "test_inventory": {
     "workspace_tests_count": 20,
-    "total_tests_target": 730
+    "total_tests_target": 770
   },
   "production_readiness_summary": {
     "status": "ready",

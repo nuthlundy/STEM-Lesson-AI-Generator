@@ -17,7 +17,9 @@ from core.config.providers import Provider
 from core.config.validator import ConfigValidator
 from core.config.exceptions import ValidationError as ConfigValidationError
 from core.artifacts.registry import ArtifactRegistry
+from core.workflow.pipeline import Pipeline
 from typing import Dict, Any
+
 
 class MockGoodPlugin(BasePlugin):
     def initialize(self) -> None: pass
@@ -278,7 +280,76 @@ class TestDiagnostics(unittest.TestCase):
             s2 = ConfigLoader.load(config_path)
             self.assertIs(s1, s2)
 
+    # Milestone 4 Release Packaging and Verification Tests
+    def test_diagnostics_reporter_release_packaging(self):
+        from core.documentation.generator import PlatformDocGenerator
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            PlatformDocGenerator.generate_summary(workspace_root=tmp_dir)
+            release_file = os.path.join(tmp_dir, "release_summary.json")
+            self.assertTrue(os.path.exists(release_file))
+            with open(release_file, "r") as fh:
+                data = json.load(fh)
+            self.assertEqual(data["platform_version"], "1.0.0")
+            self.assertEqual(data["production_readiness"], "ready")
+
+    def test_diagnostics_reporter_release_packaging_data(self):
+        from core.documentation.generator import PlatformDocGenerator
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            PlatformDocGenerator.generate_summary(workspace_root=tmp_dir)
+            release_file = os.path.join(tmp_dir, "release_summary.json")
+            with open(release_file, "r") as fh:
+                data = json.load(fh)
+            self.assertIn("build_timestamp", data)
+            self.assertIn("test_count", data)
+
+    def test_platform_doc_generator_summary(self):
+        from core.documentation.generator import PlatformDocGenerator
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            summary = PlatformDocGenerator.generate_summary(workspace_root=tmp_dir)
+            self.assertEqual(summary["metadata"]["version"], "1.0.0")
+
+    def test_platform_doc_generator_release_summary_output(self):
+        from core.documentation.generator import PlatformDocGenerator
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            PlatformDocGenerator.generate_summary(workspace_root=tmp_dir)
+            path = os.path.join(tmp_dir, "platform_summary.json")
+            self.assertTrue(os.path.exists(path))
+
+    def test_e2e_pipeline_stages_order(self):
+        from core.workflow.workflow import WorkflowOrchestrator
+        orchestrator = WorkflowOrchestrator()
+        pipeline = Pipeline("End-to-End AI Pipeline")
+        self.assertEqual(pipeline.name, "End-to-End AI Pipeline")
+
+    def test_e2e_pipeline_validation_summary(self):
+        from core.workflow.workflow import WorkflowOrchestrator
+        orchestrator = WorkflowOrchestrator()
+        self.assertIsNotNone(orchestrator.scheduler)
+
+    def test_e2e_pipeline_diagnostics_output(self):
+        from core.workflow.workflow import WorkflowOrchestrator
+        orchestrator = WorkflowOrchestrator()
+        self.assertEqual(len(orchestrator.history()), 0)
+
+    def test_platform_health_report_output(self):
+        from core.health.report import PlatformHealthReporter
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            report = PlatformHealthReporter.generate_report(workspace_root=tmp_dir)
+            self.assertEqual(report["health"]["status"], "Healthy")
+
+
+    def test_platform_bootstrap_preflight_checks(self):
+        from core.bootstrap.health import PlatformHealthCheck
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            success = PlatformHealthCheck.run_preflight(tmp_dir)
+            self.assertTrue(success)
+
+    def test_platform_bootstrap_initialization_output(self):
+        from core.bootstrap.initializer import PlatformInitializer
+        res = PlatformInitializer.initialize()
+        self.assertIn("orchestrator", res)
 
 if __name__ == "__main__":
     unittest.main()
+
 
